@@ -285,13 +285,14 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);font-si
     <div class="fgrp"><div class="flbl">Kategori</div><div class="chips" id="fCat"></div></div>
   </div>
   <div id="moreWrap" style="display:none;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)">
+    <div class="fgrp" style="margin-bottom:11px"><div class="flbl">Kelas</div><div class="chips" id="fKelas"></div></div>
     <div class="fgrp"><div class="flbl">Wali Kelas</div><div class="chips" id="fWalas"></div></div>
   </div>
   <div id="scopeNote" style="margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);font-size:12px;line-height:1.55;color:var(--ink3)"></div>
   <div class="fbar">
     <div class="fstat" id="fStat">—</div>
     <div style="display:flex;gap:9px;align-items:center">
-      <button class="fmore" id="btnMore">+ Filter wali kelas</button>
+      <button class="fmore" id="btnMore">+ Filter kelas &amp; wali kelas</button>
       <button class="freset" id="btnReset">Reset filter</button>
     </div>
   </div>
@@ -476,7 +477,7 @@ function quantile(sorted,q){
 const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
 
 /* ============ state ============ */
-const S = { scope:'TKA', wave:LAST, lemb:'ALL', prog:'ALL', lok:'ALL', cat:'ALL', walas:'ALL', quick:'ALL', q:'', sort:'cat', dir:1 };
+const S = { scope:'TKA', wave:LAST, lemb:'ALL', prog:'ALL', lok:'ALL', cat:'ALL', kelas:'ALL', walas:'ALL', quick:'ALL', q:'', sort:'cat', dir:1 };
 const WAJIB = DATA.wajib || ['B. Indonesia','B. Inggris','Matematika'];
 
 /* mapel yang dihitung untuk seorang siswa sesuai cakupan aktif */
@@ -534,6 +535,7 @@ function passFilter(s){
   if(S.lemb!=='ALL' && s.lb!==S.lemb) return false;
   if(S.prog!=='ALL' && s.p!==S.prog) return false;
   if(S.lok!=='ALL' && s.lo!==S.lok) return false;
+  if(S.kelas!=='ALL' && s.k!==S.kelas) return false;
   if(S.walas!=='ALL' && s.w!==S.walas) return false;
   if(S.cat!=='ALL'){
     const w=s.to[S.wave];
@@ -1226,6 +1228,9 @@ function buildFilters(){
   const loks=[...new Set(DATA.students.map(s=>s.lo))].filter(x=>x&&x!=='-').sort();
   chips('fLok',[['ALL','Semua'],...loks.map(l=>[l,l])],S.lok,v=>S.lok=v);
   chips('fCat',[['ALL','Semua'],...CATS.map(c=>[c,c]),['Tidak ikut','Tidak ikut']],S.cat,v=>S.cat=v,true);
+  const kls=[...new Set(DATA.students.map(s=>s.k))].filter(Boolean)
+    .sort((a,b)=>a.localeCompare(b,'id',{numeric:true,sensitivity:'base'}));
+  chips('fKelas',[['ALL','Semua'],...kls.map(k=>[k,k])],S.kelas,v=>S.kelas=v);
   const wal=[...new Set(DATA.students.map(s=>s.w))].filter(Boolean).sort();
   chips('fWalas',[['ALL','Semua'],...wal.map(w=>[w,w])],S.walas,v=>S.walas=v);
   chips('fQuick',[['ALL','Semua'],...CATS.map(c=>[c,c]),['Tidak ikut','Tidak ikut']],S.quick,v=>S.quick=v,true);
@@ -1233,10 +1238,10 @@ function buildFilters(){
 el('btnMore').onclick=()=>{
   const m=el('moreWrap'), open=m.style.display!=='none';
   m.style.display=open?'none':'block';
-  el('btnMore').textContent=open?'+ Filter wali kelas':'− Sembunyikan wali kelas';
+  el('btnMore').textContent=open?'+ Filter kelas & wali kelas':'− Sembunyikan kelas & wali kelas';
 };
 el('btnReset').onclick=()=>{
-  Object.assign(S,{scope:'TKA',wave:LAST,lemb:'ALL',prog:'ALL',lok:'ALL',cat:'ALL',walas:'ALL',quick:'ALL',q:'',sort:'cat',dir:1});
+  Object.assign(S,{scope:'TKA',wave:LAST,lemb:'ALL',prog:'ALL',lok:'ALL',cat:'ALL',kelas:'ALL',walas:'ALL',quick:'ALL',q:'',sort:'cat',dir:1});
   el('q').value=''; renderAll();
 };
 let qT; el('q').oninput=e=>{ clearTimeout(qT); qT=setTimeout(()=>{ S.q=e.target.value.trim(); renderTable(); },180); };
@@ -1486,6 +1491,7 @@ function renderAll(){
   if(S.prog!=='ALL')parts.push(S.prog);
   if(S.lok!=='ALL')parts.push(S.lok);
   if(S.cat!=='ALL')parts.push('kategori '+S.cat);
+  if(S.kelas!=='ALL')parts.push('kelas '+S.kelas);
   if(S.walas!=='ALL')parts.push(S.walas);
   /* penjelasan cakupan mapel */
   const noSub=F.filter(s=>(s.pu||[]).length).length;
